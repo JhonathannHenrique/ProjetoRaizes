@@ -8,15 +8,28 @@ class User {
                 primaryKey: true,
                 autoIncrement: true
             },
-            nome: {
-                type: database.Sequelize.STRING
+            fullName: {
+                type: database.Sequelize.STRING,
+                allowNull: false
+            },
+            areaOfExpertise: {
+                type: database.Sequelize.STRING,
+                allowNull: false
             },
             email: {
-                type: database.Sequelize.STRING
+                type: database.Sequelize.STRING,
+                allowNull: false,
+                unique: true,
+                validate: {
+                    isEmail: true
+                }
             },
-            senha: {
-                type: database.Sequelize.STRING
+            password: {
+                type: database.Sequelize.STRING,
+                allowNull: false
             },
+        }, {
+            timestamps: true
         });
     }
 }

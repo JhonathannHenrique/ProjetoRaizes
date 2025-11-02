@@ -1,29 +1,13 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import Header from "@/components/ui/header";
 import Footer from "@/components/ui/footer";
 
 export default function SobreOProjeto() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const authStatus = localStorage.getItem("isAuthenticated");
-    if (authStatus !== "true") {
-      navigate("/login");
-      return;
-    }
-    setIsAuthenticated(true);
-  }, [navigate]);
-
-  if (!isAuthenticated) {
-    return null;
-  }
+  const isAuthenticated = true;
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header isAuthenticated={true} />
+      <Header/>
       
       <main className="flex-1 container mx-auto px-4 py-16">
         <div className="text-center mb-16">
@@ -57,8 +41,8 @@ export default function SobreOProjeto() {
                   área educacional, limitando seu impacto social.
                 </p>
                 <img 
-                  src="https://images.unsplash.com/photo-1491341899189-e30e4e03d4de?w=300&h=200&fit=crop" 
-                  alt="Professores em sala de aula"
+                  src="https://observatorio3setor.org.br/wp-content/uploads/2019/08/voluntariado.jpg" 
+                  alt="Mãos unidas em sinal de voluntariado"
                   className="w-full h-32 object-cover rounded-md mt-4"
                 />
               </CardContent>
@@ -80,7 +64,7 @@ export default function SobreOProjeto() {
                 </p>
                 <img 
                   src="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=300&h=200&fit=crop" 
-                  alt="Crianças estudando"
+                  alt="Crianças em uma sala de aula"
                   className="w-full h-32 object-cover rounded-md mt-4"
                 />
               </CardContent>
@@ -102,7 +86,7 @@ export default function SobreOProjeto() {
                 </p>
                 <img 
                   src="https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=300&h=200&fit=crop" 
-                  alt="Pessoas trabalhando juntas"
+                  alt="Pessoas colaborando em um projeto"
                   className="w-full h-32 object-cover rounded-md mt-4"
                 />
               </CardContent>
@@ -134,6 +118,7 @@ export default function SobreOProjeto() {
         </div>
       </main>
       
+      {/* O Footer já exibia a variante completa, que é consistente com o estado autenticado. */}
       <Footer variant="complete" />
     </div>
   );

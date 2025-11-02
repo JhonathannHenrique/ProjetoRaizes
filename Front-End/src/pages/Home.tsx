@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/ui/header";
@@ -6,25 +6,16 @@ import Footer from "@/components/ui/footer";
 import heroImage from "@/assets/maos_dadas.jpg";
 
 export default function Home() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const authStatus = localStorage.getItem("isAuthenticated");
-    setIsAuthenticated(authStatus === "true");
-  }, []);
-
   const handleVolunteerClick = () => {
-    if (isAuthenticated) {
-      navigate("/ongs-parceiras");
-    } else {
-      navigate("/cadastro");
-    }
+    navigate("/ongs-parceiras");
   };
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header isAuthenticated={isAuthenticated} />
+      <Header/>
 
       <main className="flex-1">
         {/* Hero Section */}
@@ -60,7 +51,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Informações adicionais para usuários logados */}
+        {/* Como isAuthenticated é sempre 'true', esta seção será sempre exibida. */}
         {isAuthenticated && (
           <section className="bg-accent py-16">
             <div className="container mx-auto px-4">
@@ -90,10 +81,11 @@ export default function Home() {
                 </div>
               </div>
             </div>
-          </section> 
+          </section>
         )}
       </main>
 
+      {/* A variante do Footer será sempre 'complete'. */}
       <Footer variant={isAuthenticated ? "complete" : "simple"} />
     </div>
   );

@@ -3,125 +3,160 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 const saltRounds = 10;
-const JWT_SECRET_KEY = 'batata';
+const JWT_SECRET_KEY = process.env.JWT_SECRET || 'batata';
 
 class UserController {
-    async criarUsuario(nome, email, senha) {
-        if (
-            nome === undefined
-            || email === undefined
-            || senha === undefined
-        ) {
-            throw new Error('Nome, email e senha são obrigatórios');
+
+    async criarUsuario(req, res) {
+        const { fullName, areaOfExpertise, email, password } = req.body;
+
+        try {
+            if (!fullName || !areaOfExpertise || !email || !password) {
+                return res.status(400).json({ message: 'Todos os campos são obrigatórios.' });
+            }
+
+            const userExists = await User.findOne({ where: { email } });
+            if (userExists) {
+                return res.status(409).json({ message: 'Este e-mail já está cadastrado.' });
+            }
+
+            const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+            const user = await User.create({
+                fullName,
+                areaOfExpertise,
+                email,
+                password: hashedPassword
+            });
+
+            return res.status(201).json({
+                message: "Usuário criado com sucesso!",
+                userId: user.id
+            });
+
+        } catch (error) {
+            console.error('Erro ao criar usuário:', error);
+            return res.status(500).json({ message: 'Ocorreu um erro no servidor. Tente novamente.' });
         }
-
-        // Cria um hash da senha a partir do bcrypt com 10 rounds
-        const senhaCriptografada = await bcrypt.hash(senha, saltRounds);
-
-        // INSERT INTO users (nome, email, senha) VALUES (nome, email, senha);
-        const user = await User
-            .create({ nome, email, senha: senhaCriptografada });
-
-        return user;
     }
 
-    async buscarPorId(id) {
-        if (id === undefined) {
-            throw new Error('Id é obrigatório');
+    async login(req, res) {
+        const { email, password } = req.body;
+
+        try {
+            if (!email || !password) {
+                return res.status(400).json({ message: 'Email e senha são obrigatórios' });
+            }
+
+            const user = await User.findOne({ where: { email } });
+            if (!user) {
+                return res.status(404).json({ message: 'Usuário não encontrado' });
+            }
+
+            // Compara a senha enviada com a senha criptografada no banco
+            const isPasswordValid = await bcrypt.compare(password, user.password);
+            if (!isPasswordValid) {
+                return res.status(401).json({ message: 'Credenciais inválidas' }); // Use uma mensagem genérica por segurança
+            }
+
+            // Gera o token JWT
+            const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET_KEY, { expiresIn: '1h' });
+            
+            return res.status(200).json({ token });
+
+        } catch (error) {
+            console.error('Erro no login:', error);
+            return res.status(500).json({ message: 'Erro interno do servidor.' });
         }
-
-        const user = await User.findByPk(id);
-
-        if (!user) {
-            throw new Error('Usuário não encontrado');
-        }
-
-        return user;
     }
 
-    async alterarUsuario(id, nome, email, senha) {
-        if (
-            id === undefined
-            || nome === undefined
-            || email === undefined
-            || senha === undefined
-        ) {
-            throw new Error('Id, nome, email e senha são obrigatórios');
+    async buscarPorId(req, res) {
+        try {
+            const { id } = req.params;
+            const user = await User.findByPk(id);
+
+            if (!user) {
+                return res.status(404).json({ message: 'Usuário não encontrado' });
+            }
+
+            const { password, ...userData } = user.get({ plain: true });
+            return res.status(200).json(userData);
+
+        } catch (error) {
+            console.error('Erro ao buscar usuário:', error);
+            return res.status(500).json({ message: 'Erro interno do servidor.' });
         }
-
-        const user = await this.buscarPorId(id);
-
-        user.nome = nome;
-        user.email = email;
-        // Cria um hash da senha a partir do bcrypt com 10 rounds
-        const senhaCriptografada = await bcrypt.hash(senha, saltRounds);
-        user.senha = senhaCriptografada;
-        // UPDATE users SET nome = nome, email = email, senha = senha WHERE id = id;
-        user.save();
-
-        return user;
+    }
+    
+ 
+    async listarUsuarios(req, res) {
+        try {
+            const users = await User.findAll({
+                attributes: { exclude: ['password'] } // Exclui o campo de senha da listagem
+            });
+            return res.status(200).json(users);
+        } catch (error) {
+            console.error('Erro ao listar usuários:', error);
+            return res.status(500).json({ message: 'Erro interno do servidor.' });
+        }
     }
 
-    async deletarUsuario(id) {
-        if (id === undefined) {
-            throw new Error('Id é obrigatório');
+    async alterarUsuario(req, res) {
+        try {
+            const { id } = req.params;
+            const { fullName, areaOfExpertise, email } = req.body;
+
+            const user = await User.findByPk(id);
+            if (!user) {
+                return res.status(404).json({ message: 'Usuário não encontrado.' });
+            }
+
+            // Atualiza os campos
+            user.fullName = fullName || user.fullName;
+            user.areaOfExpertise = areaOfExpertise || user.areaOfExpertise;
+            user.email = email || user.email;
+
+            await user.save();
+            
+            const { password, ...updatedUser } = user.get({ plain: true });
+            return res.status(200).json(updatedUser);
+
+        } catch (error) {
+            console.error('Erro ao alterar usuário:', error);
+            return res.status(500).json({ message: 'Erro interno do servidor.' });
         }
-
-        const user = await this.buscarPorId(id);
-
-        user.destroy();
     }
 
-    async listarUsuarios() {
-        return User.findAll();
-    }
+    async deletarUsuario(req, res) {
+        try {
+            const { id } = req.params;
+            const user = await User.findByPk(id);
 
-    async login(email, senha) {
-        if (!email || !senha) {
-            throw new Error('Email e senha são obrigatórios');
+            if (!user) {
+                return res.status(404).json({ message: 'Usuário não encontrado' });
+            }
+
+            await user.destroy();
+            return res.status(204).send(); 
+
+        } catch (error) {
+            console.error('Erro ao deletar usuário:', error);
+            return res.status(500).json({ message: 'Erro interno do servidor.' });
         }
-
-        // SELECT * FROM users WHERE email = email;
-        // Busca o usuário pelo email
-        const user = await User.findOne({ where: { email }});
-
-        if (!user) {
-            throw new Error('Usuário não encontrado');
-        }
-
-        // Compara a senha informada com a senha do usuário
-        const senhaValida = await bcrypt.compare(senha, user.senha);
-
-        if (!senhaValida) {
-            throw new Error('Senha inválida');
-        }
-
-        // Gera o token a partir da assinatura com a chave secreta
-        const jwtToken = jwt.sign({ id: user.id }, JWT_SECRET_KEY);
-        
-        return { token: jwtToken };
-        
     }
 
     async validarToken(token) {
         try {
-            // Decodifica e valida o token
             const payload = jwt.verify(token, JWT_SECRET_KEY);
-            console.log(JSON.stringify(payload))
-    
             const user = await User.findByPk(payload.id);
-    
             if (!user) {
                 throw new Error('Token inválido');
             }
-    
             return payload;
         } catch (error) {
-            console.log(error)
             throw new Error('Token inválido');
         }
     }
-    
 }
 
 module.exports = new UserController();

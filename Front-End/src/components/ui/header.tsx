@@ -2,19 +2,14 @@ import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import logoImage from "@/assets/logo_voluntarios.png";
 
-interface HeaderProps {
-  isAuthenticated?: boolean;
-}
-
-export default function Header({ isAuthenticated = false }: HeaderProps) {
+// A interface de props e a própria prop 'isAuthenticated' foram removidas,
+// pois o componente não precisa mais delas.
+export default function Header() {
   const location = useLocation();
 
-  const publicNavItems = [
-    { label: "Início", href: "/" },
-    { label: "Login", href: "/login" },
-    { label: "Cadastro", href: "/cadastro" },
-  ];
-
+  // A lista de links públicos foi REMOVIDA.
+  
+  // Esta é a única lista de navegação que o Header conhecerá a partir de agora.
   const authenticatedNavItems = [
     { label: "Início", href: "/" },
     { label: "Sobre o Projeto", href: "/sobre-o-projeto" },
@@ -23,7 +18,9 @@ export default function Header({ isAuthenticated = false }: HeaderProps) {
     // { label: "Contato", href: "/contato" },
   ];
 
-  const navItems = isAuthenticated ? authenticatedNavItems : publicNavItems;
+  // A lógica condicional foi substituída. 
+  // 'navItems' agora sempre recebe os links de usuário autenticado.
+  const navItems = authenticatedNavItems;
 
   return (
     <header className="bg-background border-b border-border py-4">
@@ -35,6 +32,7 @@ export default function Header({ isAuthenticated = false }: HeaderProps) {
           >
             <img
                 src={logoImage} width={50}
+                alt="Logo Voluntários do Conhecimento" // Adicionado alt text para acessibilidade
               />
           </Link>
           
