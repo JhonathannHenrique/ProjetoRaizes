@@ -34,7 +34,6 @@ export default function ComoFunciona() {
         Ajustado para 'isAuthenticated={false}' para mostrar o menu público 
         com as opções de Login e Cadastro.
       */}
-      <Header isAuthenticated={false} />
       
       <main className="flex-1 container mx-auto px-4 py-16">
         <div className="text-center mb-16">
